@@ -1,0 +1,33 @@
+{
+  "name": "agri-nexus-monorepo",
+  "version": "1.0.0",
+  "description": "AI-Integrated Digital Twin Platform for Precision Farming",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && .\\venv\\Scripts\\activate && uvicorn app.main:app --reload --port 8000",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build:frontend": "cd frontend && npm run build",
+    "test:backend": "cd backend && pytest",
+    "test:frontend": "cd frontend && npm test",
+    "format:backend": "cd backend && black .",
+    "format:frontend": "cd frontend && prettier --write .",
+    "install:all": "npm install && cd frontend && npm install"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "digital-twin",
+    "precision-farming",
+    "agriculture",
+    "ai",
+    "fastapi",
+    "nextjs"
+  ],
+  "author": "Agri-Nexus Team",
+  "license": "MIT"
+}

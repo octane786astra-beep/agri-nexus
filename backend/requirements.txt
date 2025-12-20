@@ -1,0 +1,48 @@
+# Agri-Nexus Backend Dependencies
+# Python FastAPI Backend for Digital Twin Simulation
+
+# Core Framework
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+
+# Data Processing & Simulation
+numpy>=1.26.0
+pandas>=2.1.0
+scipy>=1.12.0
+
+# Data Validation
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+python-dotenv>=1.0.0
+
+# Database
+supabase>=2.3.0
+
+# AI/LLM Integration
+openai>=1.9.0
+
+# HTTP & API
+requests>=2.31.0
+aiohttp>=3.9.0
+
+# Geolocation
+geopy>=2.4.0
+
+# WebSockets
+websockets>=12.0
+
+# Machine Learning (for prediction models)
+scikit-learn>=1.4.0
+
+# Rate Limiting
+slowapi>=0.1.9
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.23.0
+
+# SMS Alerts (Advanced Feature)
+twilio>=8.11.0
+
+# PDF Generation (Advanced Feature)
+reportlab>=4.0.0

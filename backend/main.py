@@ -53,6 +53,8 @@ app.add_middleware(
         "http://localhost:3000",      # Next.js dev server
         "http://127.0.0.1:3000",
         "https://*.vercel.app",       # Vercel deployments
+        "https://*.onrender.com",     # Render.com deployments
+        "https://agri-nexus-frontend.onrender.com",  # Specific frontend
     ],
     allow_credentials=True,
     allow_methods=["*"],

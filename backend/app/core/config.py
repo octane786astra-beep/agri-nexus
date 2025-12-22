@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     
     # Google Gemini Configuration
     GEMINI_API_KEY2: str = ""
-    GEMINI_MODEL: str = "gemini-pro"
+    GEMINI_MODEL: str = "gemini-1.5-flash"
     
     # Weather API Configuration
     WEATHER_API_KEY: str = ""

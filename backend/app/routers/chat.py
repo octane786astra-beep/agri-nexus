@@ -133,20 +133,19 @@ async def chat_with_assistant(request: ChatRequest):
         # Build the system prompt with live data
         system_prompt = FARM_ASSISTANT_PROMPT.format(sensor_data=sensor_text)
         
-        # Build conversation history
-        chat_history = []
-        for msg in request.history[-10:]:  # Keep last 10 messages
-            chat_history.append({
-                "role": "user" if msg.role == "user" else "model",
-                "parts": [msg.content]
-            })
+        # Build conversation context
+        conversation = system_prompt + "\n\n"
         
-        # Start chat with history
-        chat = model.start_chat(history=chat_history)
+        # Add recent history
+        for msg in request.history[-6:]:  # Keep last 6 messages
+            role = "Farmer" if msg.role == "user" else "Krishi Mitra"
+            conversation += f"{role}: {msg.content}\n\n"
         
-        # Generate response with system context
-        full_prompt = f"{system_prompt}\n\nUser's question: {request.message}"
-        response = chat.send_message(full_prompt)
+        # Add current question
+        conversation += f"Farmer: {request.message}\n\nKrishi Mitra:"
+        
+        # Generate response using simple content generation
+        response = model.generate_content(conversation)
         
         logger.info(f"Chat response generated for: {request.message[:50]}...")
         

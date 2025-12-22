@@ -4,7 +4,6 @@ import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import Navigation from "@/components/ui/Navigation";
 import ChatBot from "@/components/chat/ChatBot";
-import FeaturesSidebar from "@/components/features/FeaturesSidebar";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -55,7 +54,6 @@ export default function RootLayout({
         <main className="pt-16">
           {children}
         </main>
-        <FeaturesSidebar />
         <ChatBot />
       </body>
     </html>

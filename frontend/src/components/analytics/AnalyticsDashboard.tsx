@@ -68,8 +68,8 @@ function AnalyticsChatBot() {
                 {messages.map((msg, i) => (
                     <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                         <div className={`max-w-[85%] px-4 py-2 rounded-2xl text-sm whitespace-pre-wrap ${msg.role === 'user'
-                                ? 'bg-emerald-600 text-white'
-                                : 'bg-white/10 text-gray-200'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-white/10 text-gray-200'
                             }`}>
                             {msg.content}
                         </div>
@@ -150,7 +150,7 @@ export default function AnalyticsDashboard() {
     ];
 
     return (
-        <div className="min-h-screen p-4 md:p-8 max-w-[1800px] mx-auto">
+        <div className="min-h-screen px-4 md:px-8 py-4 max-w-[1600px] mx-auto">
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                 <div>
@@ -180,8 +180,8 @@ export default function AnalyticsDashboard() {
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key as typeof activeTab)}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${activeTab === tab.key
-                                ? 'bg-emerald-600 text-white shadow-lg'
-                                : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                            ? 'bg-emerald-600 text-white shadow-lg'
+                            : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                             }`}
                     >
                         <span className="material-icons-round text-lg">{tab.icon}</span>

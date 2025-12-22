@@ -122,14 +122,13 @@ async def root():
 
 
 # Import and include routers
-from app.routers import sensors, simulation, research
-# from app.routers import geo  # To be added
+from app.routers import sensors, simulation, research, chat
 
 # Include routers
 app.include_router(sensors.router, tags=["Sensors"])
 app.include_router(simulation.router, prefix="/api/sim", tags=["Simulation"])
 app.include_router(research.router, prefix="/api", tags=["Research"])
-# app.include_router(geo.router, prefix="/api/geo", tags=["Geo-Intelligence"])
+app.include_router(chat.router, prefix="/api", tags=["Chat"])
 
 
 if __name__ == "__main__":

@@ -21,9 +21,13 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
     
-    # OpenAI Configuration
+    # OpenAI Configuration (legacy)
     OPENAI_API_KEY: str = ""
     OPENAI_MODEL: str = "gpt-4-turbo-preview"
+    
+    # Google Gemini Configuration
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-1.5-flash"
     
     # Weather API Configuration
     WEATHER_API_KEY: str = ""

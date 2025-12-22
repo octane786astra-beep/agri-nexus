@@ -3,6 +3,7 @@ import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import "leaflet/dist/leaflet.css";
 import Navigation from "@/components/ui/Navigation";
+import ChatBot from "@/components/chat/ChatBot";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -53,6 +54,7 @@ export default function RootLayout({
         <main className="pt-16">
           {children}
         </main>
+        <ChatBot />
       </body>
     </html>
   );

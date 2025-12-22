@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     OPENAI_MODEL: str = "gpt-4-turbo-preview"
     
     # Google Gemini Configuration
-    GEMINI_API_KEY: str = ""
+    GEMINI_API_KEY2: str = ""
     GEMINI_MODEL: str = "gemini-pro"
     
     # Weather API Configuration

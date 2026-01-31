@@ -19,9 +19,9 @@ logger = logging.getLogger("agri-nexus.chat")
 # Configure Gemini
 def get_gemini_model():
     """Initialize Gemini model with API key."""
-    if not settings.GEMINI_API_KEY2:
+    if not settings.GEMINI_API_KEY:
         return None
-    genai.configure(api_key=settings.GEMINI_API_KEY2)
+    genai.configure(api_key=settings.GEMINI_API_KEY)
     return genai.GenerativeModel(settings.GEMINI_MODEL)
 
 

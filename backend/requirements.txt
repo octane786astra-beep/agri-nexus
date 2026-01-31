@@ -18,8 +18,8 @@ python-dotenv>=1.0.0
 # Database
 supabase>=2.3.0
 
-# AI/LLM Integration
-openai>=1.9.0
+# AI/LLM Integration (Google Gemini)
+# Using google-generativeai for AI features
 
 # HTTP & API
 requests>=2.31.0

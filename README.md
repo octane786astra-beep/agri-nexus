@@ -5,7 +5,7 @@
 ![Digital Twin Concept](https://img.shields.io/badge/Concept-Digital%20Twin-green)
 ![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688)
 ![Next.js](https://img.shields.io/badge/Frontend-Next.js%2014-black)
-![AI](https://img.shields.io/badge/AI-OpenAI%20Powered-purple)
+![AI](https://img.shields.io/badge/AI-Google%20Gemini-blue)
 
 ---
 
@@ -81,7 +81,7 @@ agri-nexus-monorepo/
 - Python 3.9+
 - Node.js 18+
 - Supabase Account
-- OpenAI API Key
+- Gemini API Key
 
 ### Installation
 

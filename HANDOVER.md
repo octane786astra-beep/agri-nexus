@@ -56,7 +56,7 @@ Open http://localhost:3000
 ```
 SUPABASE_URL=your_url
 SUPABASE_KEY=your_key
-OPENAI_API_KEY=your_key
+GEMINI_API_KEY=your_key
 WEATHER_API_KEY=your_key
 ```
 

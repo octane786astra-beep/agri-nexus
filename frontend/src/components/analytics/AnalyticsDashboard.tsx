@@ -6,11 +6,12 @@
  * Comprehensive farm analytics with all features and AI chatbot.
  */
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSensorStore } from '@/store/useSensorStore';
 import { API_URL } from '@/lib/utils';
+import { useSimulationModeStore } from '@/store/useSimulationModeStore';
 import CropCalendar from '@/components/features/CropCalendar';
 import DiseaseDetection from '@/components/features/DiseaseDetection';
 import IrrigationScheduler from '@/components/features/IrrigationScheduler';
@@ -20,11 +21,44 @@ import MarketPrices from '@/components/features/MarketPrices';
 
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
 
+// Mock AI responses for simulation mode
+const generateMockResponse = (message: string): string => {
+    const lower = message.toLowerCase();
+
+    if (lower.includes('water') || lower.includes('irrigation')) {
+        return '💧 **Irrigation Advice**\n\nBased on current soil moisture (45%) and weather forecast:\n\n• Water your crops in early morning (6-8 AM)\n• Target 4-5 liters per sqm today\n• Avoid midday watering to prevent evaporation\n• Check soil moisture again tomorrow\n\n✅ Your drip system is working optimally.';
+    }
+    if (lower.includes('crop') || lower.includes('plant') || lower.includes('grow')) {
+        return '🌾 **Crop Recommendations**\n\nFor this season, consider:\n\n• **Wheat** - Good market price, drought tolerant\n• **Chickpea** - Nitrogen fixer, low water need\n• **Mustard** - Quick harvest, high demand\n\n📊 Expected ROI: 40-60% over 4 months.';
+    }
+    if (lower.includes('pest') || lower.includes('disease') || lower.includes('insect')) {
+        return '🐛 **Pest Management Alert**\n\nCurrent humidity (65%) may attract:\n\n• Aphids - Check undersides of leaves\n• Whiteflies - Use yellow sticky traps\n• Thrips - Apply neem oil spray\n\n🛡️ Prevention: Maintain plant spacing and morning watering.';
+    }
+    if (lower.includes('weather') || lower.includes('rain') || lower.includes('temperature')) {
+        return '🌤️ **Weather Outlook**\n\nNext 7 days:\n\n• Light rain expected on Thursday\n• Temperature range: 24-34°C\n• Humidity: Moderate (55-70%)\n\n💡 Tip: Reduce irrigation before rain days.';
+    }
+    if (lower.includes('price') || lower.includes('market') || lower.includes('sell')) {
+        return '📈 **Market Prices Today**\n\n• Wheat: ₹2,850/quintal (↑ 3%)\n• Rice: ₹2,200/quintal (stable)\n• Cotton: ₹6,500/quintal (↑ 5%)\n\n💡 Best time to sell cotton - prices rising!';
+    }
+
+    return '🌾 **Krishi Mitra**\n\nI can help you with:\n• Irrigation scheduling\n• Crop recommendations\n• Pest management\n• Weather forecasts\n• Market prices\n\nJust ask about any of these topics!';
+};
+
 // Embedded Chatbot for Analytics
 function AnalyticsChatBot() {
     const [messages, setMessages] = useState<{ role: string; content: string }[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const { isSimulationMode } = useSimulationModeStore();
+    const isMountedRef = useRef(true);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        isMountedRef.current = true;
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, []);
 
     const sendMessage = async () => {
         if (!input.trim() || isLoading) return;
@@ -33,6 +67,15 @@ function AnalyticsChatBot() {
         setInput('');
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setIsLoading(true);
+
+        // Simulation mode - use mock responses
+        if (isSimulationMode) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+            if (!isMountedRef.current) return;
+            setMessages(prev => [...prev, { role: 'assistant', content: '🎮 *Simulation Mode*\n\n' + generateMockResponse(userMessage) }]);
+            setIsLoading(false);
+            return;
+        }
 
         try {
             const response = await fetch(`${API_URL}/api/chat`, {
@@ -46,9 +89,13 @@ function AnalyticsChatBot() {
             const data = await response.json();
             setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
         } catch (error) {
+            // Log error and fallback to mock response
+            console.error('Analytics chat API error:', error);
+            await new Promise(resolve => setTimeout(resolve, 300));
+            if (!isMountedRef.current) return;
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: '⚠️ Could not connect to AI. Please check if backend is running.'
+                content: '⚠️ *API unavailable — showing simulated response*\n\n' + generateMockResponse(userMessage)
             }]);
         } finally {
             setIsLoading(false);

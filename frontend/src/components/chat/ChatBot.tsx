@@ -40,6 +40,34 @@ const SIMULATION_QA: Record<string, string> = {
         '🐛 **Pest Alert Analysis**\n\nWith current humidity (65%) and temperature (28°C), watch for:\n\n🔴 **High Risk:**\n• Aphids - Check undersides of leaves\n• Whiteflies - Yellow sticky traps recommended\n\n🟡 **Moderate Risk:**\n• Thrips - Especially in flowering stage\n• Caterpillars - Manual removal if spotted\n\n**Prevention:** Neem oil spray (2ml/L) every 10 days'
 };
 
+// Smart response generator for any question (fallback)
+// Returns generic guidance without specific numbers to avoid misleading users
+const generateSmartResponse = (message: string, addDisclaimer: boolean = false): string => {
+    const lower = message.toLowerCase();
+    const disclaimer = addDisclaimer ? '⚠️ *API unavailable — showing general guidance*\n\n' : '';
+
+    if (lower.includes('water') || lower.includes('irrigation') || lower.includes('moisture')) {
+        return disclaimer + '💧 **Irrigation Advice**\n\nGeneral recommendations:\n\n• Water crops in early morning (6-8 AM)\n• Check soil moisture before watering\n• Avoid midday watering to prevent evaporation\n• Monitor weather forecasts for rain\n\n💡 Use a moisture meter for accurate readings.';
+    }
+    if (lower.includes('crop') || lower.includes('plant') || lower.includes('grow') || lower.includes('seed')) {
+        return disclaimer + '🌾 **Crop Recommendations**\n\nFor this season, consider:\n\n• **Wheat** - Good drought tolerance\n• **Chickpea** - Nitrogen fixer, low water need\n• **Mustard** - Quick harvest\n\n💡 Check local mandi prices before planting.';
+    }
+    if (lower.includes('pest') || lower.includes('disease') || lower.includes('insect') || lower.includes('bug')) {
+        return disclaimer + '🐛 **Pest Management Tips**\n\nCommon precautions:\n\n• Aphids - Check undersides of leaves\n• Whiteflies - Use yellow sticky traps\n• General - Apply neem oil spray preventively\n\n🛡️ Prevention: Maintain plant spacing and avoid overwatering.';
+    }
+    if (lower.includes('weather') || lower.includes('rain') || lower.includes('temperature') || lower.includes('forecast')) {
+        return disclaimer + '🌤️ **Weather Tips**\n\nGeneral guidance:\n\n• Check local weather forecasts regularly\n• Adjust irrigation based on rainfall\n• Protect crops during extreme weather\n\n💡 Use weather apps for accurate local forecasts.';
+    }
+    if (lower.includes('price') || lower.includes('market') || lower.includes('sell') || lower.includes('mandi')) {
+        return disclaimer + '📈 **Market Guidance**\n\nGeneral tips:\n\n• Check current prices at your local mandi\n• Compare prices across nearby markets\n• Consider storage if prices are low\n\n💡 Use eNAM or AgriMarket apps for real-time prices.';
+    }
+    if (lower.includes('fertilizer') || lower.includes('nutrient') || lower.includes('npk')) {
+        return disclaimer + '🧪 **Fertilizer Tips**\n\nGeneral recommendations:\n\n• Get soil tested before applying fertilizers\n• Apply in split doses for better absorption\n• Follow recommended dosages for your crop\n\n📅 Consult local agriculture office for specific guidance.';
+    }
+
+    return disclaimer + '🌾 **Krishi Mitra**\n\nI can help you with:\n• Irrigation scheduling\n• Crop recommendations\n• Pest management\n• Weather guidance\n• Market information\n• Fertilizer advice\n\nJust ask about any of these topics!';
+};
+
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -82,6 +110,14 @@ export default function ChatBot() {
             return;
         }
 
+        // In simulation mode, use smart response for any question
+        if (isSimulationMode) {
+            await new Promise(resolve => setTimeout(resolve, 800));
+            setMessages(prev => [...prev, { role: 'assistant', content: '🎮 *Simulation Mode*\n\n' + generateSmartResponse(userMessage) }]);
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const response = await fetch(`${API_URL}/api/chat`, {
                 method: 'POST',
@@ -98,10 +134,11 @@ export default function ChatBot() {
             setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
             setSensorContext(data.sensor_context);
         } catch (error) {
-            setMessages(prev => [...prev, {
-                role: 'assistant',
-                content: '⚠️ Sorry, I couldn\'t process that. Please check your connection or try again.'
-            }]);
+            // Log the actual error for debugging/telemetry
+            console.error('ChatBot API error:', error);
+            // Fallback with clear disclaimer that this is not a real AI response
+            await new Promise(resolve => setTimeout(resolve, 300));
+            setMessages(prev => [...prev, { role: 'assistant', content: generateSmartResponse(userMessage, true) }]);
         } finally {
             setIsLoading(false);
         }

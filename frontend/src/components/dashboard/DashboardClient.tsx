@@ -6,14 +6,16 @@
  * Features Playfair Display headers, glass panels, and ApexCharts
  */
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useSensorStore } from '@/store/useSensorStore';
+import { useSimulationModeStore } from '@/store/useSimulationModeStore';
 import { useWeatherSocket } from '@/hooks/useWeatherSocket';
 import { formatTemp, formatPercent } from '@/lib/utils';
 
-// Dynamic import for ApexCharts (SSR disabled)
+// Dynamic imports for ApexCharts and Leaflet (SSR disabled)
 const Chart = dynamic(() => import('react-apexcharts'), { ssr: false });
+const DashboardMap = dynamic(() => import('./DashboardMap'), { ssr: false });
 
 interface DashboardClientProps {
     farmId?: string;
@@ -23,8 +25,38 @@ export default function DashboardClient({ farmId = 'demo-farm-001' }: DashboardC
     useWeatherSocket({ farmId });
 
     const { currentReadings, historicalData, alerts, isConnected } = useSensorStore();
+    const { isSimulationMode, toggleSimulationMode } = useSimulationModeStore();
     const [currentTime, setCurrentTime] = useState(new Date());
     const [greeting, setGreeting] = useState('Good Morning');
+    const clickCountRef = useRef(0);
+    const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+    // Handle triple-click on greeting to toggle simulation mode
+    const handleGreetingClick = () => {
+        clickCountRef.current += 1;
+        if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+
+        if (clickCountRef.current >= 3) {
+            toggleSimulationMode();
+            clickCountRef.current = 0;
+        } else {
+            clickTimerRef.current = setTimeout(() => {
+                clickCountRef.current = 0;
+            }, 500);
+        }
+    };
+
+    // Keyboard shortcut: Ctrl+Shift+S for simulation mode
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                toggleSimulationMode();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [toggleSimulationMode]);
 
     useEffect(() => {
         const updateTime = () => {
@@ -108,8 +140,16 @@ export default function DashboardClient({ farmId = 'demo-farm-001' }: DashboardC
             {/* Header */}
             <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4 relative z-10">
                 <div>
-                    <h1 className="font-display text-4xl md:text-5xl font-medium text-gray-100 drop-shadow-sm tracking-wide">
+                    <h1
+                        onClick={handleGreetingClick}
+                        className="font-display text-4xl md:text-5xl font-medium text-gray-100 drop-shadow-sm tracking-wide cursor-default select-none"
+                    >
                         {greeting}, <span className="text-emerald-400">Farmer</span>
+                        {isSimulationMode && (
+                            <span className="ml-3 px-2 py-1 text-xs font-sans bg-amber-500/20 text-amber-400 rounded-full border border-amber-500/30 animate-pulse">
+                                🎮 SIM MODE
+                            </span>
+                        )}
                     </h1>
                     <div className="flex items-center gap-2 mt-3 text-gray-400 font-sans font-light tracking-wide">
                         <span className="material-icons-round text-lg">calendar_today</span>
@@ -150,25 +190,9 @@ export default function DashboardClient({ farmId = 'demo-farm-001' }: DashboardC
                             <h3 className="font-display font-medium text-white drop-shadow-md tracking-wide">Farm Location</h3>
                         </div>
                         <div className="absolute inset-0 z-0 bg-slate-900">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                                src="https://www.openstreetmap.org/export/embed.html?bbox=77.4946%2C12.8716%2C77.6946%2C13.0716&layer=mapnik"
-                                alt="Bangalore Farm Location"
-                                className="w-full h-full object-cover opacity-60 hidden"
-                            />
-                            {/* Fallback gradient map representation */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/30 via-slate-800 to-slate-900">
-                                <div className="absolute inset-0 opacity-20" style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cpath d='M0 50 Q25 30 50 50 T100 50' fill='none' stroke='%2310b981' stroke-width='0.5'/%3E%3Cpath d='M0 60 Q25 40 50 60 T100 60' fill='none' stroke='%2310b981' stroke-width='0.5'/%3E%3Cpath d='M0 70 Q25 50 50 70 T100 70' fill='none' stroke='%2310b981' stroke-width='0.5'/%3E%3C/svg%3E")`,
-                                    backgroundSize: '100px 100px'
-                                }} />
-                                {/* Location pin */}
-                                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                    <div className="w-4 h-4 bg-emerald-500 rounded-full animate-ping opacity-50"></div>
-                                    <div className="absolute top-0 left-0 w-4 h-4 bg-emerald-400 rounded-full border-2 border-white"></div>
-                                </div>
-                            </div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40"></div>
+                            {/* Leaflet Map */}
+                            <DashboardMap lat={12.9716} lon={77.5946} />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/40 pointer-events-none"></div>
                         </div>
                         <div className="absolute bottom-4 left-4 right-4 z-10">
                             <div className="glass-panel bg-black/60 rounded-xl p-4 text-xs shadow-lg backdrop-blur-md border border-white/5">

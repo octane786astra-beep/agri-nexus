@@ -4,6 +4,7 @@
  * Deep Research Page
  * ==================
  * AI-powered farm analysis with full scan and crop recommendations.
+ * Features location dropdown with 10+ Indian farming regions.
  */
 
 import { useState } from 'react';
@@ -17,13 +18,143 @@ import {
     TrendingUp,
     Droplets,
     Thermometer,
-    Mountain
+    Mountain,
+    ChevronDown,
+    Bug
 } from 'lucide-react';
 import { api, type FullScanResponse, type CropFeasibility } from '@/lib/api';
 import FloatingCard from '@/components/ui/FloatingCard';
+import PlantDiseaseScanner from './PlantDiseaseScanner';
 import { cn } from '@/lib/utils';
 
+// Indian farming regions with detailed data
+interface LocationData {
+    name: string;
+    state: string;
+    lat: number;
+    lon: number;
+    climate: string;
+    avgTemp: string;
+    rainfall: string;
+    specialty: string[];
+    marketPrices: { crop: string; price: string }[];
+}
+
+const INDIAN_LOCATIONS: LocationData[] = [
+    {
+        name: 'Bangalore',
+        state: 'Karnataka',
+        lat: 12.9716,
+        lon: 77.5946,
+        climate: 'Tropical Savanna',
+        avgTemp: '24°C',
+        rainfall: '970mm/year',
+        specialty: ['Ragi', 'Vegetables', 'Floriculture'],
+        marketPrices: [{ crop: 'Ragi', price: '₹3,200/q' }, { crop: 'Tomato', price: '₹25/kg' }]
+    },
+    {
+        name: 'Ludhiana',
+        state: 'Punjab',
+        lat: 30.9010,
+        lon: 75.8573,
+        climate: 'Semi-arid',
+        avgTemp: '24°C',
+        rainfall: '680mm/year',
+        specialty: ['Wheat', 'Rice', 'Cotton'],
+        marketPrices: [{ crop: 'Wheat', price: '₹2,275/q' }, { crop: 'Rice', price: '₹2,183/q' }]
+    },
+    {
+        name: 'Nashik',
+        state: 'Maharashtra',
+        lat: 20.0063,
+        lon: 73.7905,
+        climate: 'Hot Semi-arid',
+        avgTemp: '26°C',
+        rainfall: '800mm/year',
+        specialty: ['Grapes', 'Onion', 'Pomegranate'],
+        marketPrices: [{ crop: 'Grapes', price: '₹80/kg' }, { crop: 'Onion', price: '₹18/kg' }]
+    },
+    {
+        name: 'Guntur',
+        state: 'Andhra Pradesh',
+        lat: 16.3067,
+        lon: 80.4365,
+        climate: 'Tropical Wet',
+        avgTemp: '29°C',
+        rainfall: '940mm/year',
+        specialty: ['Chillies', 'Cotton', 'Tobacco'],
+        marketPrices: [{ crop: 'Chillies', price: '₹18,000/q' }, { crop: 'Cotton', price: '₹6,620/q' }]
+    },
+    {
+        name: 'Coimbatore',
+        state: 'Tamil Nadu',
+        lat: 11.0168,
+        lon: 76.9558,
+        climate: 'Semi-arid',
+        avgTemp: '27°C',
+        rainfall: '640mm/year',
+        specialty: ['Coconut', 'Turmeric', 'Banana'],
+        marketPrices: [{ crop: 'Coconut', price: '₹25/piece' }, { crop: 'Turmeric', price: '₹8,500/q' }]
+    },
+    {
+        name: 'Indore',
+        state: 'Madhya Pradesh',
+        lat: 22.7196,
+        lon: 75.8577,
+        climate: 'Subtropical',
+        avgTemp: '25°C',
+        rainfall: '950mm/year',
+        specialty: ['Soybean', 'Wheat', 'Gram'],
+        marketPrices: [{ crop: 'Soybean', price: '₹4,600/q' }, { crop: 'Wheat', price: '₹2,400/q' }]
+    },
+    {
+        name: 'Jaipur',
+        state: 'Rajasthan',
+        lat: 26.9124,
+        lon: 75.7873,
+        climate: 'Semi-arid',
+        avgTemp: '26°C',
+        rainfall: '500mm/year',
+        specialty: ['Mustard', 'Pulses', 'Bajra'],
+        marketPrices: [{ crop: 'Mustard', price: '₹5,650/q' }, { crop: 'Bajra', price: '₹2,350/q' }]
+    },
+    {
+        name: 'Bhubaneswar',
+        state: 'Odisha',
+        lat: 20.2961,
+        lon: 85.8245,
+        climate: 'Tropical',
+        avgTemp: '27°C',
+        rainfall: '1,500mm/year',
+        specialty: ['Rice', 'Jute', 'Groundnut'],
+        marketPrices: [{ crop: 'Rice', price: '₹2,040/q' }, { crop: 'Groundnut', price: '₹5,850/q' }]
+    },
+    {
+        name: 'Thrissur',
+        state: 'Kerala',
+        lat: 10.5276,
+        lon: 76.2144,
+        climate: 'Tropical Wet',
+        avgTemp: '28°C',
+        rainfall: '3,100mm/year',
+        specialty: ['Spices', 'Rubber', 'Coconut'],
+        marketPrices: [{ crop: 'Black Pepper', price: '₹42,000/q' }, { crop: 'Rubber', price: '₹165/kg' }]
+    },
+    {
+        name: 'Ahmedabad',
+        state: 'Gujarat',
+        lat: 23.0225,
+        lon: 72.5714,
+        climate: 'Hot Semi-arid',
+        avgTemp: '27°C',
+        rainfall: '780mm/year',
+        specialty: ['Cotton', 'Groundnut', 'Castor'],
+        marketPrices: [{ crop: 'Cotton', price: '₹6,500/q' }, { crop: 'Castor', price: '₹5,200/q' }]
+    }
+];
+
 export default function ResearchClient() {
+    const [selectedLocation, setSelectedLocation] = useState<LocationData | null>(INDIAN_LOCATIONS[0]);
     const [lat, setLat] = useState('12.9716');
     const [lon, setLon] = useState('77.5946');
     const [farmSize, setFarmSize] = useState('5');
@@ -31,6 +162,14 @@ export default function ResearchClient() {
     const [isLoading, setIsLoading] = useState(false);
     const [result, setResult] = useState<FullScanResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    const handleLocationSelect = (location: LocationData) => {
+        setSelectedLocation(location);
+        setLat(location.lat.toString());
+        setLon(location.lon.toString());
+        setIsDropdownOpen(false);
+    };
 
     const handleScan = async () => {
         setIsLoading(true);
@@ -74,6 +213,80 @@ export default function ResearchClient() {
                     </h2>
 
                     <div className="space-y-4">
+                        {/* Location Dropdown */}
+                        <div>
+                            <label className="text-white/60 text-sm">Select Region</label>
+                            <div className="relative mt-1">
+                                <button
+                                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                    className="w-full px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-left flex items-center justify-between hover:border-blue-500/50 transition-colors"
+                                >
+                                    <span>{selectedLocation ? `${selectedLocation.name}, ${selectedLocation.state}` : 'Select a location...'}</span>
+                                    <ChevronDown className={cn("w-4 h-4 transition-transform", isDropdownOpen && "rotate-180")} />
+                                </button>
+
+                                <AnimatePresence>
+                                    {isDropdownOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="absolute z-50 w-full mt-1 bg-slate-900 border border-white/10 rounded-lg shadow-xl max-h-60 overflow-y-auto"
+                                        >
+                                            {INDIAN_LOCATIONS.map((location) => (
+                                                <button
+                                                    key={location.name}
+                                                    onClick={() => handleLocationSelect(location)}
+                                                    className={cn(
+                                                        "w-full px-3 py-2 text-left hover:bg-white/10 transition-colors flex items-center justify-between",
+                                                        selectedLocation?.name === location.name && "bg-blue-500/20 text-blue-400"
+                                                    )}
+                                                >
+                                                    <div>
+                                                        <span className="text-white">{location.name}</span>
+                                                        <span className="text-white/40 text-sm ml-2">{location.state}</span>
+                                                    </div>
+                                                    <span className="text-white/30 text-xs">{location.specialty[0]}</span>
+                                                </button>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+                        </div>
+
+                        {/* Location Details Card */}
+                        {selectedLocation && (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                className="p-3 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 border border-white/10 rounded-lg text-xs"
+                            >
+                                <div className="flex items-center gap-2 mb-2">
+                                    <Thermometer className="w-3 h-3 text-orange-400" />
+                                    <span className="text-white/70">{selectedLocation.avgTemp} avg</span>
+                                    <Droplets className="w-3 h-3 text-blue-400 ml-2" />
+                                    <span className="text-white/70">{selectedLocation.rainfall}</span>
+                                </div>
+                                <p className="text-white/50 mb-2">{selectedLocation.climate}</p>
+                                <div className="flex flex-wrap gap-1">
+                                    {selectedLocation.specialty.map((crop) => (
+                                        <span key={crop} className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-full">
+                                            {crop}
+                                        </span>
+                                    ))}
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-white/10">
+                                    <p className="text-white/40 mb-1">Market Prices:</p>
+                                    {selectedLocation.marketPrices.map((item) => (
+                                        <span key={item.crop} className="text-white/60 mr-3">
+                                            {item.crop}: <span className="text-yellow-400">{item.price}</span>
+                                        </span>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        )}
+
                         <div>
                             <label className="text-white/60 text-sm">Latitude</label>
                             <input
@@ -147,6 +360,18 @@ export default function ResearchClient() {
                             </div>
                         )}
                     </div>
+                </FloatingCard>
+
+                {/* Plant Disease Scanner */}
+                <FloatingCard floating={false} glowColor="purple" className="lg:col-span-1">
+                    <h2 className="text-white font-semibold mb-4 flex items-center gap-2">
+                        <Bug className="w-5 h-5 text-purple-400" />
+                        Disease Identification
+                    </h2>
+                    <p className="text-white/50 text-sm mb-4">
+                        Upload a photo of your plant to identify diseases and get treatment recommendations.
+                    </p>
+                    <PlantDiseaseScanner />
                 </FloatingCard>
 
                 {/* Results */}

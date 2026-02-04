@@ -4,11 +4,13 @@
  * ChatBot Component
  * =================
  * Floating AI chat assistant for farmers using Gemini API.
+ * Supports simulation mode with mock answers for suggested questions.
  */
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '@/lib/utils';
+import { useSimulationModeStore } from '@/store/useSimulationModeStore';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -23,6 +25,21 @@ interface SensorContext {
     alerts: string[];
 }
 
+// Predefined Q&A pairs for simulation mode
+const SIMULATION_QA: Record<string, string> = {
+    'Based on current soil moisture, do my crops need watering?':
+        '💧 **Watering Analysis**\n\nBased on current soil moisture (45%), I recommend:\n\n• **Light watering** in the early morning (6-8 AM)\n• Focus on root zone irrigation\n• Avoid midday watering to prevent evaporation\n• Expected water requirement: 4-5 liters per sqm\n\n✅ Your drip irrigation system is optimal for this condition.',
+
+    'Is the current temperature causing any stress to crops?':
+        '🌡️ **Temperature Stress Analysis**\n\nAt 28°C, your crops are within the **optimal range**.\n\n• No heat stress detected\n• Photosynthesis rate: Optimal\n• Night temperature differential: Good (8-10°C drop)\n\n⚠️ If temperature exceeds 35°C, consider:\n- Shade nets for sensitive crops\n- Increased irrigation frequency\n- Mulching to cool soil',
+
+    'What crops should I plant in the current season?':
+        '🌾 **Rabi Season Recommendations** (Oct-Mar)\n\nTop picks for your location:\n\n1. **Wheat** - ROI: 40-60%\n2. **Chickpea (Chana)** - ROI: 35-50%\n3. **Mustard** - ROI: 45-55%\n4. **Coriander** - Quick harvest, good market\n\n💡 Pro Tip: Consider intercropping wheat with mustard for better soil health and risk distribution.',
+
+    'What pests should I watch out for in current conditions?':
+        '🐛 **Pest Alert Analysis**\n\nWith current humidity (65%) and temperature (28°C), watch for:\n\n🔴 **High Risk:**\n• Aphids - Check undersides of leaves\n• Whiteflies - Yellow sticky traps recommended\n\n🟡 **Moderate Risk:**\n• Thrips - Especially in flowering stage\n• Caterpillars - Manual removal if spotted\n\n**Prevention:** Neem oil spray (2ml/L) every 10 days'
+};
+
 export default function ChatBot() {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<Message[]>([]);
@@ -30,6 +47,7 @@ export default function ChatBot() {
     const [isLoading, setIsLoading] = useState(false);
     const [sensorContext, setSensorContext] = useState<SensorContext | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const { isSimulationMode } = useSimulationModeStore();
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -46,13 +64,23 @@ export default function ChatBot() {
         }
     }, [isOpen, messages.length]);
 
-    const sendMessage = async () => {
-        if (!input.trim() || isLoading) return;
+    // Handle sending message with simulation mode support
+    const handleSendMessage = async (messageText: string) => {
+        if (!messageText.trim() || isLoading) return;
 
-        const userMessage = input.trim();
+        const userMessage = messageText.trim();
         setInput('');
         setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
         setIsLoading(true);
+
+        // Check if we're in simulation mode and have a predefined answer
+        if (isSimulationMode && SIMULATION_QA[userMessage]) {
+            // Simulate network delay for realism
+            await new Promise(resolve => setTimeout(resolve, 800));
+            setMessages(prev => [...prev, { role: 'assistant', content: SIMULATION_QA[userMessage] }]);
+            setIsLoading(false);
+            return;
+        }
 
         try {
             const response = await fetch(`${API_URL}/api/chat`, {
@@ -79,6 +107,10 @@ export default function ChatBot() {
         }
     };
 
+    const sendMessage = async () => {
+        await handleSendMessage(input);
+    };
+
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -86,7 +118,7 @@ export default function ChatBot() {
         }
     };
 
-    // Quick action buttons
+    // Quick action buttons with predefined messages
     const quickActions = [
         { label: '💧 Water needed?', message: 'Based on current soil moisture, do my crops need watering?' },
         { label: '🌡️ Crop stress?', message: 'Is the current temperature causing any stress to crops?' },
@@ -147,8 +179,8 @@ export default function ChatBot() {
                                 >
                                     <div
                                         className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap ${msg.role === 'user'
-                                                ? 'bg-emerald-600 text-white rounded-br-sm'
-                                                : 'bg-white/10 text-gray-200 rounded-bl-sm'
+                                            ? 'bg-emerald-600 text-white rounded-br-sm'
+                                            : 'bg-white/10 text-gray-200 rounded-bl-sm'
                                             }`}
                                     >
                                         {msg.content}
@@ -175,10 +207,7 @@ export default function ChatBot() {
                                 {quickActions.map((action, i) => (
                                     <button
                                         key={i}
-                                        onClick={() => {
-                                            setInput(action.message);
-                                            setTimeout(() => sendMessage(), 100);
-                                        }}
+                                        onClick={() => handleSendMessage(action.message)}
                                         className="text-xs px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-gray-300 hover:bg-emerald-500/20 hover:border-emerald-500/30 transition-colors"
                                     >
                                         {action.label}
